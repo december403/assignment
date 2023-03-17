@@ -12,14 +12,26 @@ void echoServer(int socketFD){
     struct sockaddr_in senderAddr;
     socklen_t len;
     int n;
-    n = recvfrom(socketFD, buffer, sizeof(buffer), 0, (struct sockaddr *)&senderAddr, &len);
-    printf("%s\n", buffer);
+    while(1){
+        len = sizeof(senderAddr);
+        memset(buffer, 0, sizeof(buffer));
+        n = recvfrom(socketFD, buffer, sizeof(buffer), 0, (struct sockaddr *)&senderAddr, &len);
+        if(n<=0){
+            if(errno == EINTR) continue;
+            else perror("recvfrom error");
+        }
+        else{
+            sendto(socketFD, buffer, n, 0, (struct sockaddr *)&senderAddr, len);
+            printf("%s\n", buffer);
+        }
+    }
+    
+    
     return;
 }
 
 int main(int argnum, const char *argv[]){
-    char *IPAddr = "127.0.0.1";
-    int port = 3000;
+    int port = atoi(argv[1]);
     int socketFD = socket(AF_INET, SOCK_DGRAM, 0);
     if( socketFD < 0 ){
         perror("failed to create socket file descriptor");
